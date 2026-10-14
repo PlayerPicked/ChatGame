@@ -14,6 +14,7 @@ import com.mongenscave.mcchatgame.utils.LoggerUtils;
 import com.mongenscave.mcchatgame.utils.PlayerUtils;
 import org.bukkit.entity.Player;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -107,7 +108,13 @@ public class GameRandomCharacters extends GameHandler {
     }
 
     @Override
-    protected GameType getGameType() {
+    @Nullable
+    public String getCorrectAnswer() {
+        return null;
+    }
+
+    @Override
+    public GameType getGameType() {
         return GameType.RANDOM_CHARACTERS;
     }
 

@@ -127,7 +127,13 @@ public class GameWordStop extends GameHandler {
     }
 
     @Override
-    protected GameType getGameType() {
+    @Nullable
+    public String getCorrectAnswer() {
+        return correctMob;
+    }
+
+    @Override
+    public GameType getGameType() {
         return GameType.WORD_STOP;
     }
 

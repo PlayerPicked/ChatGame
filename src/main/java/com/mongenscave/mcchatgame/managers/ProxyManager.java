@@ -1,9 +1,7 @@
 package com.mongenscave.mcchatgame.managers;
 
-import com.google.gson.JsonObject;
 import com.mongenscave.mcchatgame.McChatGame;
 import com.mongenscave.mcchatgame.identifiers.GameType;
-import com.mongenscave.mcchatgame.identifiers.keys.ConfigKeys;
 import com.mongenscave.mcchatgame.identifiers.keys.MessageKeys;
 import com.mongenscave.mcchatgame.models.GameHandler;
 import com.mongenscave.mcchatgame.models.impl.*;
@@ -14,10 +12,15 @@ import com.mongenscave.mcchatgame.utils.GameUtils;
 import com.mongenscave.mcchatgame.utils.LoggerUtils;
 import lombok.Getter;
 import org.bukkit.Bukkit;
-import org.bukkit.Sound;
 import org.bukkit.entity.Player;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.EnumMap;
+import java.util.Map;
+
+/**
+ * SIMPLE ProxyManager - master validates, broadcasts result, all servers process locally
+ */
 public class ProxyManager {
     private final McChatGame plugin;
     @Getter private final RedisConfig redisConfig;
@@ -26,6 +29,26 @@ public class ProxyManager {
     @Getter private final String serverId;
     @Getter private boolean enabled;
     @Getter private boolean isMasterServer;
+
+    private static final Map<GameType, GameHandlerFactory> GAME_FACTORIES = new EnumMap<>(GameType.class);
+
+    static {
+        GAME_FACTORIES.put(GameType.MATH, GameMath::new);
+        GAME_FACTORIES.put(GameType.WHO_AM_I, GameWhoAmI::new);
+        GAME_FACTORIES.put(GameType.WORD_GUESSER, GameWordGuess::new);
+        GAME_FACTORIES.put(GameType.RANDOM_CHARACTERS, GameRandomCharacters::new);
+        GAME_FACTORIES.put(GameType.WORD_STOP, GameWordStop::new);
+        GAME_FACTORIES.put(GameType.REVERSE, GameReverse::new);
+        GAME_FACTORIES.put(GameType.FILL_OUT, GameFillOut::new);
+        GAME_FACTORIES.put(GameType.CRAFTING, GameCrafting::new);
+        GAME_FACTORIES.put(GameType.HANGMAN, GameHangman::new);
+        GAME_FACTORIES.put(GameType.RANGE, GameRange::new);
+    }
+
+    @FunctionalInterface
+    private interface GameHandlerFactory {
+        GameHandler create();
+    }
 
     public ProxyManager(@NotNull McChatGame plugin) {
         this.plugin = plugin;
@@ -74,7 +97,7 @@ public class ProxyManager {
 
         LoggerUtils.info("Redis cross-server support enabled");
         LoggerUtils.info("Server ID: {}", serverId);
-        LoggerUtils.info("Server Role: {}", isMasterServer ? "MASTER (starts games)" : "SLAVE (receives games)");
+        LoggerUtils.info("Server Role: {}", isMasterServer ? "MASTER (validates answers)" : "SLAVE (sends answers)");
     }
 
     public void shutdown() {
@@ -86,9 +109,10 @@ public class ProxyManager {
         }
     }
 
+    // ==================== OUTGOING MESSAGES ====================
+
     public void broadcastGameStart(@NotNull GameType gameType, @NotNull String gameData, long startTime) {
         if (!enabled || !isMasterServer) return;
-        LoggerUtils.info("Broadcasting GAME_START - Type: {}, Data: {}", gameType, gameData);
         publisher.publishGameStart(gameType, gameData, startTime);
     }
 
@@ -99,119 +123,103 @@ public class ProxyManager {
 
     public void broadcastGameTimeout(@NotNull GameType gameType, @NotNull String correctAnswer) {
         if (!enabled || !isMasterServer) return;
-        LoggerUtils.info("Broadcasting GAME_TIMEOUT - Type: {}, Answer: {}", gameType, correctAnswer);
         publisher.publishGameTimeout(gameType, correctAnswer);
     }
 
-    public void broadcastPlayerWin(@NotNull Player player, @NotNull GameType gameType, double timeTaken) {
+    /**
+     * SIMPLE: Broadcast that answer was correct - all servers will process locally
+     */
+    public void broadcastCorrectAnswer(@NotNull String playerName, @NotNull GameType gameType, @NotNull String answer) {
         if (!enabled || !isMasterServer) return;
-        LoggerUtils.info("Broadcasting PLAYER_WIN - Player: {}, Type: {}, Time: {}",
-                player.getName(), gameType, timeTaken);
-        publisher.publishPlayerWin(player.getName(), gameType, timeTaken);
+        publisher.publishCorrectAnswer(playerName, gameType, answer);
     }
 
-    public void handleRemoteGameStart(@NotNull GameType gameType, @NotNull String gameData, long startTime) {
-        LoggerUtils.info("=== HANDLE REMOTE GAME START ===");
-        LoggerUtils.info("Game Type: {}", gameType);
-        LoggerUtils.info("Game Data: '{}'", gameData);
-        LoggerUtils.info("Start Time: {}", startTime);
+    /**
+     * Slave sends answer to master for validation
+     */
+    public void sendAnswerToMaster(@NotNull Player player, @NotNull String answer, @NotNull GameType gameType) {
+        if (!enabled || isMasterServer) return; // Only slaves send
+        publisher.publishPlayerAnswer(player.getName(), answer, gameType);
+    }
 
+    // ==================== INCOMING MESSAGE HANDLERS ====================
+
+    public void handleRemoteGameStart(@NotNull GameType gameType, @NotNull String gameData, long startTime) {
         plugin.getScheduler().runTask(() -> {
-            LoggerUtils.info("Stopping all existing games...");
+            LoggerUtils.info("Starting remote game: {}", gameType);
             GameManager.stopAllGames();
 
-            LoggerUtils.info("Creating game handler for: {}", gameType);
             GameHandler handler = createGameHandler(gameType);
+            if (handler == null) return;
 
-            LoggerUtils.info("Starting game as remote with data: '{}'", gameData);
             handler.startAsRemote(startTime, gameData);
-
-            LoggerUtils.info("Adding game to GameManager...");
             GameManager.addGame(gameType, handler);
-
-            LoggerUtils.info("✓ Remote game started successfully!");
         });
     }
 
     public void handleRemoteGameStop(@NotNull GameType gameType) {
-        plugin.getScheduler().runTask(() -> {
-            LoggerUtils.info("Remote game stop received: {}", gameType);
-            GameManager.stopGame(gameType);
-        });
+        plugin.getScheduler().runTask(() -> GameManager.stopGame(gameType));
     }
 
     public void handleRemoteGameTimeout(@NotNull GameType gameType, @NotNull String correctAnswer) {
         plugin.getScheduler().runTask(() -> {
-            LoggerUtils.info("Remote game timeout - Type: {}, Answer: {}", gameType, correctAnswer);
-
             String message = getTimeoutMessage(gameType, correctAnswer);
             GameUtils.broadcast(message);
-
             GameManager.stopGame(gameType);
         });
     }
 
-    public void handleRemotePlayerWin(@NotNull String playerName, @NotNull GameType gameType, double timeTaken) {
+    /**
+     * SIMPLE: Master validated answer - ALL servers process for their local players
+     */
+    public void handleCorrectAnswer(@NotNull String playerName, @NotNull GameType gameType, @NotNull String answer) {
         plugin.getScheduler().runTask(() -> {
-            String formattedTime = String.format("%.2f", timeTaken);
-            String message = getWinMessage(gameType)
-                    .replace("{player}", playerName)
-                    .replace("{time}", formattedTime);
+            // Find local player
+            Player localPlayer = Bukkit.getPlayerExact(playerName);
 
-            if (gameType == GameType.RANGE) {
-                message = message.replace("{number}", "?");
-            }
-
-            GameUtils.broadcast(message);
-            LoggerUtils.info("Remote player win broadcast: {} in {} ({}s)", playerName, gameType, formattedTime);
-
-            GameManager.stopGame(gameType);
-        });
-    }
-
-    public void handleRemoteBroadcast(@NotNull String messageKey, @NotNull JsonObject placeholders) {
-        plugin.getScheduler().runTask(() -> {
-            try {
-                String message = MessageKeys.valueOf(messageKey).getMessage();
-
-                for (String key : placeholders.keySet()) {
-                    message = message.replace("{" + key + "}", placeholders.get(key).getAsString());
-                }
-
+            if (localPlayer != null) {
+                // Player is on THIS server - process the win!
+                LoggerUtils.info("Processing correct answer for LOCAL player: {}", playerName);
+                GameManager.handleLocalPlayerWin(localPlayer, gameType);
+            } else {
+                // Player is on another server - just display the win message
+                LoggerUtils.info("Displaying win for REMOTE player: {}", playerName);
+                String message = getWinMessage(gameType)
+                        .replace("{player}", playerName)
+                        .replace("{time}", "?"); // We don't have time here
                 GameUtils.broadcast(message);
-            } catch (Exception exception) {
-                LoggerUtils.error("Error handling remote broadcast: " + exception.getMessage());
+                GameManager.stopGame(gameType);
             }
         });
     }
 
-    public void handleRemoteSound(@NotNull String sound) {
+    /**
+     * MASTER ONLY: Validate answer from slave and broadcast if correct
+     */
+    public void handlePlayerAnswerValidation(@NotNull String playerName, @NotNull String answer, @NotNull GameType gameType) {
         plugin.getScheduler().runTask(() -> {
-            try {
-                Sound soundEnum = Sound.valueOf(sound);
-                Bukkit.getOnlinePlayers().forEach(player ->
-                        player.playSound(player.getLocation(), soundEnum, 0.5f, 1.0f)
-                );
-            } catch (Exception exception) {
-                LoggerUtils.error("Invalid sound: " + sound);
+            LoggerUtils.info("Master validating answer from {}: '{}'", playerName, answer);
+
+            // Check if answer is correct
+            if (GameManager.isAnswerCorrect(answer, gameType)) {
+                LoggerUtils.info("✓ Answer CORRECT! Broadcasting to all servers...");
+                broadcastCorrectAnswer(playerName, gameType, answer);
+            } else {
+                LoggerUtils.info("✗ Answer INCORRECT: '{}'", answer);
+                // Optionally: broadcast incorrect answer (for games like Hangman)
             }
         });
     }
+
+    // ==================== HELPER METHODS ====================
 
     @NotNull
     private GameHandler createGameHandler(@NotNull GameType gameType) {
-        return switch (gameType) {
-            case MATH -> new GameMath();
-            case WHO_AM_I -> new GameWhoAmI();
-            case WORD_GUESSER -> new GameWordGuess();
-            case RANDOM_CHARACTERS -> new GameRandomCharacters();
-            case WORD_STOP -> new GameWordStop();
-            case REVERSE -> new GameReverse();
-            case FILL_OUT -> new GameFillOut();
-            case CRAFTING -> new GameCrafting();
-            case HANGMAN -> new GameHangman();
-            case RANGE -> new GameRange();
-        };
+        GameHandlerFactory factory = GAME_FACTORIES.get(gameType);
+        if (factory == null) {
+            throw new IllegalArgumentException("No factory registered for game type: " + gameType);
+        }
+        return factory.create();
     }
 
     @NotNull
@@ -245,17 +253,6 @@ public class ProxyManager {
             case RANGE -> MessageKeys.RANGE_NO_WIN.getMessage();
         };
 
-        message = message.replace("{answer}", correctAnswer);
-        message = message.replace("{word}", correctAnswer);
-
-        if (gameType == GameType.RANGE) {
-            String rangeConfig = plugin.getConfiguration().getString("range.range", "0-20");
-            String[] rangeParts = rangeConfig.split("-");
-            String min = rangeParts.length > 0 ? rangeParts[0] : "0";
-            String max = rangeParts.length > 1 ? rangeParts[1] : "20";
-            message = message.replace("{min}", min).replace("{max}", max);
-        }
-
-        return message;
+        return message.replace("{answer}", correctAnswer).replace("{word}", correctAnswer);
     }
 }

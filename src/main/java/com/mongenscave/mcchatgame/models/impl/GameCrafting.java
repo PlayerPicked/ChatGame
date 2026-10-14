@@ -114,6 +114,12 @@ public class GameCrafting extends GameHandler implements Listener {
     }
 
     @Override
+    @Nullable
+    public String getCorrectAnswer() {
+        return null;
+    }
+
+    @Override
     public void stop() {
         if (timeoutTask != null) timeoutTask.cancel();
 
@@ -149,7 +155,7 @@ public class GameCrafting extends GameHandler implements Listener {
     }
 
     @Override
-    protected GameType getGameType() {
+    public GameType getGameType() {
         return GameType.CRAFTING;
     }
 

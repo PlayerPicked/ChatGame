@@ -15,6 +15,7 @@ import com.mongenscave.mcchatgame.utils.PlayerUtils;
 import org.bukkit.entity.Player;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -117,8 +118,14 @@ public class GameFillOut extends GameHandler {
     }
 
     @Override
-    protected GameType getGameType() {
+    public GameType getGameType() {
         return GameType.FILL_OUT;
+    }
+
+    @Override
+    @Nullable
+    public String getCorrectAnswer() {
+        return correctAnswer;
     }
 
     @NotNull

@@ -127,8 +127,14 @@ public class GameWhoAmI extends GameHandler {
     }
 
     @Override
-    protected GameType getGameType() {
+    public GameType getGameType() {
         return GameType.WHO_AM_I;
+    }
+
+    @Override
+    @Nullable
+    public String getCorrectAnswer() {
+        return correctAnswer;
     }
 
     @Nullable

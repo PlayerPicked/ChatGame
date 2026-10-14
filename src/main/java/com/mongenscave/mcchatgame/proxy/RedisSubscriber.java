@@ -3,9 +3,7 @@ package com.mongenscave.mcchatgame.proxy;
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import com.mongenscave.mcchatgame.McChatGame;
-import com.mongenscave.mcchatgame.identifiers.GameType;
 import com.mongenscave.mcchatgame.managers.ProxyManager;
-import com.mongenscave.mcchatgame.proxy.messages.RedisMessageType;
 import com.mongenscave.mcchatgame.utils.LoggerUtils;
 import org.jetbrains.annotations.NotNull;
 import redis.clients.jedis.Jedis;
@@ -14,6 +12,9 @@ import redis.clients.jedis.JedisPubSub;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
+/**
+ * SIMPLE Redis subscriber - receives correct answer broadcasts and processes locally
+ */
 public class RedisSubscriber extends JedisPubSub {
     private final RedisConfig redisConfig;
     private final ProxyManager proxyManager;
@@ -44,23 +45,17 @@ public class RedisSubscriber extends JedisPubSub {
             try {
                 jedis = redisConfig.getJedisPool().getResource();
 
-                String[] channels = new String[RedisMessageType.values().length];
-                for (int i = 0; i < RedisMessageType.values().length; i++) {
-                    channels[i] = channelPrefix + ":" + RedisMessageType.values()[i].getChannel();
-                }
+                String channel = channelPrefix + ":game";
 
                 LoggerUtils.info("=== REDIS SUBSCRIBER STARTING ===");
                 LoggerUtils.info("Server ID: {}", serverId);
-                LoggerUtils.info("Channel Prefix: {}", channelPrefix);
-                LoggerUtils.info("Subscribing to {} Redis channels:", channels.length);
-                for (String channel : channels) {
-                    LoggerUtils.info("  - {}", channel);
-                }
+                LoggerUtils.info("Server Role: {}", proxyManager.isMasterServer() ? "MASTER" : "SLAVE");
+                LoggerUtils.info("Subscribing to: {}", channel);
                 LoggerUtils.info("=================================");
 
-                jedis.subscribe(this, channels);
+                jedis.subscribe(this, channel);
             } catch (Exception exception) {
-                LoggerUtils.error("Redis subscriber error: " + exception.getMessage());
+                LoggerUtils.error("Redis subscriber error: {}", exception.getMessage());
                 exception.printStackTrace();
             } finally {
                 if (jedis != null) {
@@ -87,136 +82,95 @@ public class RedisSubscriber extends JedisPubSub {
             executorService.shutdown();
             LoggerUtils.info("Redis subscriber stopped");
         } catch (Exception exception) {
-            LoggerUtils.error("Error shutting down subscriber: " + exception.getMessage());
+            LoggerUtils.error("Error shutting down subscriber: {}", exception.getMessage());
         }
     }
 
     @Override
     public void onMessage(String channel, String message) {
-        LoggerUtils.info("=== REDIS MESSAGE RECEIVED ===");
-        LoggerUtils.info("Channel: {}", channel);
-        LoggerUtils.info("Raw Message: {}", message);
-        LoggerUtils.info("=============================");
-
         executorService.submit(() -> handleMessage(message));
     }
 
     private void handleMessage(@NotNull String message) {
         try {
             JsonObject json = gson.fromJson(message, JsonObject.class);
+            GameMessage gameMessage = GameMessage.fromJson(json);
 
-            String messageServerId = json.get("serverId").getAsString();
-
-            LoggerUtils.info("=== PROCESSING REDIS MESSAGE ===");
-            LoggerUtils.info("Message Server ID: {}", messageServerId);
-            LoggerUtils.info("Our Server ID: {}", serverId);
-
-            if (messageServerId.equals(serverId)) {
-                LoggerUtils.info("IGNORING: This is our own message");
-                LoggerUtils.info("===============================");
+            // Ignore our own messages
+            if (gameMessage.getServerId().equals(serverId)) {
+                LoggerUtils.info("Ignoring own message from server {}", serverId);
                 return;
             }
 
-            String typeStr = json.get("type").getAsString();
-            RedisMessageType type = RedisMessageType.valueOf(typeStr);
+            LoggerUtils.info("=== RECEIVED: {} for {} ===",
+                    gameMessage.getMessageType(), gameMessage.getGameType());
 
-            LoggerUtils.info("Message Type: {}", type);
-            LoggerUtils.info("Message Content: {}", json);
-
-            switch (type) {
-                case GAME_START -> {
-                    LoggerUtils.info(">>> HANDLING GAME_START <<<");
-                    handleGameStart(json);
-                }
-                case GAME_STOP -> {
-                    LoggerUtils.info(">>> HANDLING GAME_STOP <<<");
-                    handleGameStop(json);
-                }
-                case GAME_TIMEOUT -> {
-                    LoggerUtils.info(">>> HANDLING GAME_TIMEOUT <<<");
-                    handleGameTimeout(json);
-                }
-                case PLAYER_WIN -> {
-                    LoggerUtils.info(">>> HANDLING PLAYER_WIN <<<");
-                    handlePlayerWin(json);
-                }
-                case BROADCAST_MESSAGE -> {
-                    LoggerUtils.info(">>> HANDLING BROADCAST_MESSAGE <<<");
-                    handleBroadcastMessage(json);
-                }
-                case BROADCAST_SOUND -> {
-                    LoggerUtils.info(">>> HANDLING BROADCAST_SOUND <<<");
-                    handleBroadcastSound(json);
-                }
+            switch (gameMessage.getMessageType()) {
+                case GAME_START -> handleGameStart(gameMessage);
+                case GAME_STOP -> handleGameStop(gameMessage);
+                case GAME_TIMEOUT -> handleGameTimeout(gameMessage);
+                case ANSWER_CORRECT -> handleCorrectAnswer(gameMessage); // NEW!
+                case PLAYER_ANSWER -> handlePlayerAnswer(gameMessage);
+                default -> LoggerUtils.warn("Unknown message type: {}", gameMessage.getMessageType());
             }
 
-            LoggerUtils.info("===============================");
-
         } catch (Exception exception) {
-            LoggerUtils.error("=== ERROR HANDLING REDIS MESSAGE ===");
-            LoggerUtils.error("Error: " + exception.getMessage());
+            LoggerUtils.error("Error handling Redis message: {}", exception.getMessage());
             exception.printStackTrace();
-            LoggerUtils.error("===================================");
         }
     }
 
-    private void handleGameStart(@NotNull JsonObject json) {
-        GameType gameType = GameType.valueOf(json.get("gameType").getAsString());
-        String gameData = json.get("gameData").getAsString();
-        long startTime = json.get("startTime").getAsLong();
+    private void handleGameStart(@NotNull GameMessage message) {
+        String gameData = message.getPayload("gameData", String.class);
+        Number startTimeNum = message.getPayload("startTime", Number.class);
+        long startTime = startTimeNum != null ? startTimeNum.longValue() : System.currentTimeMillis();
 
-        LoggerUtils.info("Game Type: {}", gameType);
-        LoggerUtils.info("Game Data: {}", gameData);
-        LoggerUtils.info("Start Time: {}", startTime);
-        LoggerUtils.info("Calling proxyManager.handleRemoteGameStart()...");
-
-        proxyManager.handleRemoteGameStart(gameType, gameData, startTime);
+        LoggerUtils.info("Starting remote game: {} with data: {}", message.getGameType(), gameData);
+        proxyManager.handleRemoteGameStart(message.getGameType(), gameData, startTime);
     }
 
-    private void handleGameStop(@NotNull JsonObject json) {
-        GameType gameType = GameType.valueOf(json.get("gameType").getAsString());
-        LoggerUtils.info("Stopping game: {}", gameType);
-        proxyManager.handleRemoteGameStop(gameType);
+    private void handleGameStop(@NotNull GameMessage message) {
+        LoggerUtils.info("Stopping remote game: {}", message.getGameType());
+        proxyManager.handleRemoteGameStop(message.getGameType());
     }
 
-    private void handleGameTimeout(@NotNull JsonObject json) {
-        GameType gameType = GameType.valueOf(json.get("gameType").getAsString());
-        String correctAnswer = json.get("correctAnswer").getAsString();
-
-        LoggerUtils.info("Game timeout - Type: {}, Answer: {}", gameType, correctAnswer);
-        proxyManager.handleRemoteGameTimeout(gameType, correctAnswer);
+    private void handleGameTimeout(@NotNull GameMessage message) {
+        String correctAnswer = message.getPayload("correctAnswer", String.class);
+        LoggerUtils.info("Remote game timeout: {} - Answer: {}", message.getGameType(), correctAnswer);
+        proxyManager.handleRemoteGameTimeout(message.getGameType(), correctAnswer);
     }
 
-    private void handlePlayerWin(@NotNull JsonObject json) {
-        String playerName = json.get("playerName").getAsString();
-        GameType gameType = GameType.valueOf(json.get("gameType").getAsString());
-        double timeTaken = json.get("timeTaken").getAsDouble();
+    private void handleCorrectAnswer(@NotNull GameMessage message) {
+        String playerName = message.getPayload("playerName", String.class);
+        String answer = message.getPayload("answer", String.class);
 
-        LoggerUtils.info("Player win - Player: {}, Type: {}, Time: {}", playerName, gameType, timeTaken);
-        proxyManager.handleRemotePlayerWin(playerName, gameType, timeTaken);
+        LoggerUtils.info("Correct answer broadcast: {} answered '{}' correctly for {}",
+                playerName, answer, message.getGameType());
+
+        proxyManager.handleCorrectAnswer(playerName, message.getGameType(), answer);
     }
 
-    private void handleBroadcastMessage(@NotNull JsonObject json) {
-        String messageKey = json.get("messageKey").getAsString();
-        JsonObject placeholders = json.getAsJsonObject("placeholders");
+    private void handlePlayerAnswer(@NotNull GameMessage message) {
+        if (!proxyManager.isMasterServer()) {
+            LoggerUtils.info("Ignoring player answer - not master server");
+            return;
+        }
 
-        LoggerUtils.info("Broadcasting message: {}", messageKey);
-        proxyManager.handleRemoteBroadcast(messageKey, placeholders);
-    }
+        String playerName = message.getPayload("playerName", String.class);
+        String answer = message.getPayload("answer", String.class);
 
-    private void handleBroadcastSound(@NotNull JsonObject json) {
-        String sound = json.get("sound").getAsString();
-        LoggerUtils.info("Playing sound: {}", sound);
-        proxyManager.handleRemoteSound(sound);
+        LoggerUtils.info("Master validating answer from {}: '{}'", playerName, answer);
+
+        proxyManager.handlePlayerAnswerValidation(playerName, answer, message.getGameType());
     }
 
     @Override
     public void onSubscribe(String channel, int subscribedChannels) {
-        LoggerUtils.info("✓ Subscribed to channel: {} (Total: {})", channel, subscribedChannels);
+        LoggerUtils.info("✓ Subscribed to: {} (Total: {})", channel, subscribedChannels);
     }
 
     @Override
     public void onUnsubscribe(String channel, int subscribedChannels) {
-        LoggerUtils.info("✗ Unsubscribed from channel: {} (Remaining: {})", channel, subscribedChannels);
+        LoggerUtils.info("✗ Unsubscribed from: {} (Remaining: {})", channel, subscribedChannels);
     }
 }

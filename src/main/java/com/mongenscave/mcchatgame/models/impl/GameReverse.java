@@ -14,6 +14,7 @@ import com.mongenscave.mcchatgame.utils.LoggerUtils;
 import com.mongenscave.mcchatgame.utils.PlayerUtils;
 import org.bukkit.entity.Player;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 import java.util.concurrent.ThreadLocalRandom;
@@ -114,8 +115,14 @@ public class GameReverse extends GameHandler {
     }
 
     @Override
-    protected GameType getGameType() {
+    public GameType getGameType() {
         return GameType.REVERSE;
+    }
+
+    @Override
+    @Nullable
+    public String getCorrectAnswer() {
+        return originalWord;
     }
 
     private void announceReversed() {

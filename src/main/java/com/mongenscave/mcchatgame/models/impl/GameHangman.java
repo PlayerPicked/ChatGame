@@ -16,6 +16,7 @@ import com.mongenscave.mcchatgame.utils.PlayerUtils;
 import dev.dejvokep.boostedyaml.block.implementation.Section;
 import org.bukkit.entity.Player;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -155,7 +156,7 @@ public class GameHangman extends GameHandler {
     }
 
     @Override
-    protected GameType getGameType() {
+    public GameType getGameType() {
         return GameType.HANGMAN;
     }
 
@@ -170,6 +171,12 @@ public class GameHangman extends GameHandler {
                     .replace("{stage}", stages));
             GameUtils.broadcast(processedMessage);
         }
+    }
+
+    @Override
+    @Nullable
+    public String getCorrectAnswer() {
+        return correctWord;
     }
 
     @NotNull

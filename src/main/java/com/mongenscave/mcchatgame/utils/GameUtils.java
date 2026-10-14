@@ -22,6 +22,7 @@ import java.util.regex.Pattern;
 public class GameUtils {
     private final ThreadLocalRandom random = ThreadLocalRandom.current();
     private final Pattern CHANCE_PATTERN = Pattern.compile("\\[(\\d+)]\\s*(.+)");
+    private static final int GUARANTEED_WEIGHT = 100;
 
     public void rewardPlayer(@NotNull Player winner) {
         List<String> rewardConfigs = ConfigKeys.REWARDS.getList();
@@ -30,12 +31,34 @@ public class GameUtils {
         List<WeightedReward> weightedRewards = parseRewards(rewardConfigs);
         if (weightedRewards.isEmpty()) return;
 
-        WeightedReward selectedReward = selectWeightedReward(weightedRewards);
-        if (selectedReward == null) return;
+        List<WeightedReward> guaranteedRewards = new ArrayList<>();
+        List<WeightedReward> randomRewards = new ArrayList<>();
 
-        String command = selectedReward.command().replace("{player}", winner.getName());
+        for (WeightedReward reward : weightedRewards) {
+            if (reward.weight() == GUARANTEED_WEIGHT) {
+                guaranteedRewards.add(reward);
+            } else {
+                randomRewards.add(reward);
+            }
+        }
 
-        McChatGame.getInstance().getScheduler().runTask(() -> Bukkit.dispatchCommand(Bukkit.getConsoleSender(), command));
+        for (WeightedReward reward : guaranteedRewards) {
+            giveReward(winner, reward);
+        }
+
+        if (!randomRewards.isEmpty()) {
+            WeightedReward selectedReward = selectWeightedReward(randomRewards);
+            if (selectedReward != null) {
+                giveReward(winner, selectedReward);
+            }
+        }
+    }
+
+    private void giveReward(@NotNull Player winner, @NotNull WeightedReward reward) {
+        String command = reward.command().replace("{player}", winner.getName());
+        McChatGame.getInstance().getScheduler().runTask(() ->
+                Bukkit.dispatchCommand(Bukkit.getConsoleSender(), command)
+        );
     }
 
     public void broadcast(@NotNull String message) {

@@ -11,6 +11,9 @@ import org.bukkit.entity.Player;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+/**
+ * SIMPLE GameHandler - games provide correct answer for validation
+ */
 public abstract class GameHandler {
     @Getter protected GameState state = GameState.INACTIVE;
     protected Object gameData;
@@ -25,7 +28,14 @@ public abstract class GameHandler {
     public abstract void start();
     public abstract void stop();
     public abstract void handleAnswer(@NotNull Player player, @NotNull String answer);
-    protected abstract GameType getGameType();
+    public abstract GameType getGameType();
+
+    /**
+     * SIMPLE: Return the correct answer for this game
+     * Used by master server to validate answers from slaves
+     */
+    @Nullable
+    public abstract String getCorrectAnswer();
 
     public void startAsRemote(long remoteStartTime, @NotNull String remoteGameData) {
         this.isRemoteGame = true;
@@ -86,9 +96,9 @@ public abstract class GameHandler {
 
         ProxyManager proxyManager = McChatGame.getInstance().getProxyManager();
         if (proxyManager.isEnabled() && proxyManager.isMasterServer()) {
-            long endTime = System.currentTimeMillis();
-            double timeTaken = (endTime - startTime) / 1000.0;
-            proxyManager.broadcastPlayerWin(winner, getGameType(), timeTaken);
+            // SIMPLE: Just broadcast that this answer was correct
+            // All servers will process locally
+            proxyManager.broadcastCorrectAnswer(winner.getName(), getGameType(), getCorrectAnswer());
         }
     }
 

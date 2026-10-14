@@ -1,15 +1,17 @@
 package com.mongenscave.mcchatgame.proxy;
 
 import com.google.gson.Gson;
-import com.google.gson.JsonObject;
 import com.mongenscave.mcchatgame.McChatGame;
 import com.mongenscave.mcchatgame.identifiers.GameType;
-import com.mongenscave.mcchatgame.proxy.messages.RedisMessageType;
+import com.mongenscave.mcchatgame.proxy.messages.GameMessageType;
 import com.mongenscave.mcchatgame.utils.LoggerUtils;
 import lombok.Getter;
 import org.jetbrains.annotations.NotNull;
 import redis.clients.jedis.Jedis;
 
+/**
+ * SIMPLE Redis publisher - master validates and broadcasts result
+ */
 public class RedisPublisher {
     private final RedisConfig redisConfig;
     private final Gson gson;
@@ -25,62 +27,69 @@ public class RedisPublisher {
     }
 
     public void publishGameStart(@NotNull GameType gameType, @NotNull String gameData, long startTime) {
-        JsonObject message = RedisMessageType.GAME_START.createBaseMessage(serverId);
-        message.addProperty("gameType", gameType.name());
-        message.addProperty("gameData", gameData);
-        message.addProperty("startTime", startTime);
+        GameMessage message = new GameMessage(gameType, serverId, GameMessageType.GAME_START)
+                .addPayload("gameData", gameData)
+                .addPayload("startTime", startTime);
 
-        publish(RedisMessageType.GAME_START, message);
+        publish(message);
+        LoggerUtils.info("Published GAME_START: {} - Data: {}", gameType, gameData);
     }
 
     public void publishGameStop(@NotNull GameType gameType) {
-        JsonObject message = RedisMessageType.GAME_STOP.createBaseMessage(serverId);
-        message.addProperty("gameType", gameType.name());
-
-        publish(RedisMessageType.GAME_STOP, message);
+        GameMessage message = new GameMessage(gameType, serverId, GameMessageType.GAME_STOP);
+        publish(message);
+        LoggerUtils.info("Published GAME_STOP: {}", gameType);
     }
 
     public void publishGameTimeout(@NotNull GameType gameType, @NotNull String correctAnswer) {
-        JsonObject message = RedisMessageType.GAME_TIMEOUT.createBaseMessage(serverId);
-        message.addProperty("gameType", gameType.name());
-        message.addProperty("correctAnswer", correctAnswer);
+        GameMessage message = new GameMessage(gameType, serverId, GameMessageType.GAME_TIMEOUT)
+                .addPayload("correctAnswer", correctAnswer);
 
-        publish(RedisMessageType.GAME_TIMEOUT, message);
+        publish(message);
+        LoggerUtils.info("Published GAME_TIMEOUT: {} - Answer: {}", gameType, correctAnswer);
     }
 
+    /**
+     * SIMPLE: Master broadcasts that an answer was correct
+     * All servers (including slaves) will process this locally for their own players
+     */
+    public void publishCorrectAnswer(@NotNull String playerName, @NotNull GameType gameType, @NotNull String answer) {
+        GameMessage message = new GameMessage(gameType, serverId, GameMessageType.ANSWER_CORRECT)
+                .addPayload("playerName", playerName)
+                .addPayload("answer", answer);
+
+        publish(message);
+        LoggerUtils.info("Published ANSWER_CORRECT: {} answered '{}' correctly for {}", playerName, answer, gameType);
+    }
+
+    /**
+     * Slave sends answer to master for validation
+     */
     public void publishPlayerAnswer(@NotNull String playerName, @NotNull String answer, @NotNull GameType gameType) {
-        JsonObject message = RedisMessageType.PLAYER_ANSWER.createBaseMessage(serverId);
-        message.addProperty("playerName", playerName);
-        message.addProperty("answer", answer);
-        message.addProperty("gameType", gameType.name());
+        GameMessage message = new GameMessage(gameType, serverId, GameMessageType.PLAYER_ANSWER)
+                .addPayload("playerName", playerName)
+                .addPayload("answer", answer);
 
-        publish(RedisMessageType.PLAYER_ANSWER, message);
+        publish(message);
+        LoggerUtils.info("Published PLAYER_ANSWER: {} answered '{}' for {}", playerName, answer, gameType);
     }
 
-    public void publishPlayerWin(@NotNull String playerName, @NotNull GameType gameType, double timeTaken) {
-        JsonObject message = RedisMessageType.PLAYER_WIN.createBaseMessage(serverId);
-        message.addProperty("playerName", playerName);
-        message.addProperty("gameType", gameType.name());
-        message.addProperty("timeTaken", timeTaken);
-
-        publish(RedisMessageType.PLAYER_WIN, message);
-    }
-
-    private void publish(@NotNull RedisMessageType type, @NotNull JsonObject message) {
+    private void publish(@NotNull GameMessage message) {
         if (!redisConfig.isConnected()) {
             LoggerUtils.warn("Cannot publish message - Redis not connected");
             return;
         }
 
         try (Jedis jedis = redisConfig.getJedisPool().getResource()) {
-            String channel = channelPrefix + ":" + type.getChannel();
-            String json = gson.toJson(message);
+            String channel = channelPrefix + ":game";
+            String json = gson.toJson(message.toJson());
 
             jedis.publish(channel, json);
 
-            LoggerUtils.info("Published {} message to channel {}", type.name(), channel);
+            LoggerUtils.info("✓ Published {} for {} to Redis", message.getMessageType(), message.getGameType());
         } catch (Exception exception) {
-            LoggerUtils.error("Failed to publish message: " + exception.getMessage());
+            LoggerUtils.error("Failed to publish message: {}", exception.getMessage());
+            exception.printStackTrace();
         }
     }
 }
