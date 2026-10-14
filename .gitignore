@@ -1,0 +1,24 @@
+# Gradle: caches and build output are regenerated on every build
+.gradle/
+build/
+# Local Gradle properties may contain credentials
+gradle.properties
+
+# IDE files are per developer
+.idea/
+*.iml
+*.ipr
+*.iws
+.vscode/
+
+# Compiled files (the Gradle wrapper jar must stay tracked)
+*.class
+*.jar
+!gradle/wrapper/gradle-wrapper.jar
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
