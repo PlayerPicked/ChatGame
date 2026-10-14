@@ -1,59 +1,42 @@
-# Docs: https://docs.mongenscave.com/free-products/mc-chatgame
+# ------------------------------------------------------------------
+#  ChatGame configuration
+#  All player-facing texts live in messages.yml.
+# ------------------------------------------------------------------
 
-# Cross server settings!
-redis:
-  # Enable Redis cross-server synchronization
-  enabled: false
-
-  # Redis server connection
-  host: "localhost"
-  port: 6379
-  password: "" # Leave empty if no password
-  database: 0
-  ssl: false
-  timeout: 2000 # Connection timeout in milliseconds
-
-  # Server role: 'master' or 'slave'
-  # ONLY the master server will start games automatically
-  # Slave servers will only receive and display games from master
-  server-role: master
-
-  # Unique identifier for this server (auto-generated if not set)
-  # Use different IDs for each server in your network
-  server-id: "lobby-1"
-
-  # Redis channel prefix (all servers must use the same prefix)
-  channel-prefix: "mcchatgame"
-
-  # Connection pool settings
-  pool:
-    max-total: 8
-    max-idle: 8
-    min-idle: 0
-    max-wait: 2000
-
-# BASIC SETTINGS
+# Names of the main command. The first one is the main name.
+# Changes need a server restart.
 aliases:
   - "chatgame"
-  - "mcchatgame"
 
-rewards:
-  - "[20] give {player} gold_ingot 1" # [chance] (command)
-  - "[15] give {player} diamond 1"
-
+# Seconds to wait after a round ends before the next one starts automatically.
 time-between-games: 20
+
+# Rounds only start automatically when at least this many players are online.
 min-players: 1
 
+# Console commands run for the winner. {player} = the winner's name.
+# "[chance] command": entries with [100] always run, from the others exactly one
+# is picked, weighted by its chance. An entry without [chance] has a chance of 1.
+rewards:
+  - "[20] give {player} gold_ingot 1"
+  - "[15] give {player} diamond 1"
 
-# GAMES & OPERATIONS
+# ------------------------------------------------------------------
+#  Games
+#  enabled = picked by the automatic rotation (/chatgame start works either way)
+#  time    = seconds before the round ends without a winner
+# ------------------------------------------------------------------
+
+# Copy a random sequence of characters (case sensitive).
 random-characters:
   enabled: false
   time: 60
   length: 8
 
+# Solve the left side; the right side is the answer. Format: "<problem> = <answer>"
 math:
-  time: 60
   enabled: false
+  time: 60
   problems:
     - "5 x 5 = 25"
     - "7 + 3 = 10"
@@ -100,21 +83,23 @@ math:
     - "5 + 5 = 10"
     - "3 x 9 = 27"
 
+# Guess who is described. Format: "<description> = <answer>"
 who-am-i:
-  time: 60
   enabled: false
+  time: 60
   words:
     - "I sneak at night, my bones creak, and I shoot arrows at you! = Skeleton"
     - "I sneak up quietly, then explode loudly, leaving a giant hole! = Creeper"
-    - "Sunlight is my enemy, but at night I’ll attack you! = Zombie"
-    - "I strike in the darkness if you don’t sleep enough! = Phantom"
-    - "I steal blocks, won’t attack unless you look into my eyes! = Enderman"
+    - "Sunlight is my enemy, but at night I'll attack you! = Zombie"
+    - "I strike in the darkness if you don't sleep enough! = Phantom"
+    - "I steal blocks, won't attack unless you look into my eyes! = Enderman"
     - "I have three heads, I destroy hard, summon me and you better run! = Wither"
-    - "I live in the forest, I watch you quietly, if you're kind to me, I’ll follow you! = Wolf"
+    - "I live in the forest, I watch you quietly, if you're kind to me, I'll follow you! = Wolf"
 
+# Name the mob from its first letter. Format: "<letter> = <answer>"
 word-stop:
-  time: 60
   enabled: false
+  time: 60
   mobs:
     - "Z = Zombie"
     - "E = Enderman"
@@ -128,9 +113,10 @@ word-stop:
     - "T = Turtle"
     - "S = Shulker"
 
+# Unscramble the word.
 word-guesser:
-  time: 60
   enabled: false
+  time: 60
   words:
     - "Apple"
     - "Desk"
@@ -142,9 +128,10 @@ word-guesser:
     - "Love"
     - "Cloud"
 
+# Type the word that is shown backwards.
 reverse:
-  time: 60
   enabled: false
+  time: 60
   words:
     - "Apple"
     - "Desk"
@@ -156,9 +143,10 @@ reverse:
     - "Love"
     - "Cloud"
 
+# Half of the letters are hidden; type the full word.
 fill-out:
-  time: 60
   enabled: false
+  time: 60
   words:
     - "Apple"
     - "Desk"
@@ -170,10 +158,11 @@ fill-out:
     - "Love"
     - "Cloud"
 
+# Players open a crafting table with /chatgame crafting and craft the item.
+# Key = the item to craft, items-to-place = the ingredients handed out (vanilla material names).
 crafting:
-  time: 120
   enabled: false
-  title: "&fCrafting &8» &#42f598&l{item}"
+  time: 120
   crafts:
     "IRON_SHOVEL":
       items-to-place:
@@ -181,78 +170,49 @@ crafting:
         - "STICK"
         - "IRON_INGOT"
 
+# Guess the number between the two bounds. Format: "<min>-<max>"
 range:
-  time: 10
   enabled: true
+  time: 10
   range: "0-20"
 
+# Guess the word letter by letter. Only single letters typed in chat count.
 hangman:
   enabled: false
   time: 120
-  stages-enabled: true
-  stages:
-    '1': ╔══╗
-    '2': ║     ║
-    '3': ║     O
-    '4': ║    /|\
-    '5': ║    / \
-    '6': ╚════
+  # The round is lost after this many wrong letters.
+  max-wrong-guesses: 6
+  # true = every player may guess only one letter per round.
   only-once: false
-  words: # Don't recommend too long words, might be long for the vanilla chat
-    - alma
-  placeholders: '&7&l_ '
-  found: '&a&l{letter} '
-  stage-in: '&c'
-  stage-out: '&7'
+  # Long words may not fit into the vanilla chat width.
+  words:
+    - "alma"
 
-# FEATURE(S)
+# ------------------------------------------------------------------
+#  Win streaks
+# ------------------------------------------------------------------
+# A streak grows with every won round. Every player who was online when a round
+# started and did not win it loses their streak.
 streaks:
   enabled: true
-  5:
-    reach-message:
-      enabled: true
-      message:
-        - ""
-        - "&8&l&m--------------------------"
-        - ""
-        - " &8&l| &#42f598&l5 &a&lNEW STREAK"
-        - ""
-        - " &8&l| &f{player} reached streak 5!"
-        - ""
-        - "&8&l&m--------------------------"
-        - ""
-    lost-message:
-      enabled: true
-      message:
-        - ""
-        - "&8&l&m--------------------------"
-        - ""
-        - " &8&l| &#42f598&l5 &c&lSTREAK LOST"
-        - ""
-        - " &8&l| &f{player} reached streak 5!"
-        - ""
-        - "&8&l&m--------------------------"
-        - ""
-    commands:
-      - "give {player} diamond 5"
+  # Key = streak length. Texts are in messages.yml (streaks.reached / streaks.lost).
+  # {player} and {streak} work in the commands.
+  milestones:
+    5:
+      announce-reached: true
+      announce-lost: true
+      commands:
+        - "give {player} diamond 5"
 
-# ADDONS
-
-database:
-  type: "h2" # H2, MySQL
-
-  mysql:
-    host: "localhost"
-    port: 3306
-    database: "coma112"
-    username: "root"
-    password: ""
-
+# ------------------------------------------------------------------
+#  Feedback for the winner and at round start
+# ------------------------------------------------------------------
 toast:
   enabled: true
-  message: "&a&lSUCCESS GUESS!"
+  # The icon of the toast; the text is toast.title in messages.yml.
   material: "BOOK"
 
+# Vanilla sound keys, e.g. minecraft:entity.player.levelup
 sounds:
   start:
     enabled: true
@@ -261,15 +221,39 @@ sounds:
     enabled: true
     sound: "minecraft:entity.player.levelup"
 
-placeholders:
-  no-game: "&c&lNO GAME"
-  fill-out: "&fFill out &8» &#42f598{word} &8(&#42f598{time}&8)"
-  math: "&fMath &8» &#42f598{word} &8(&#42f598{time}&8)"
-  random: "&fRandom Characters &8» &#42f598{word} &8(&#42f598{time}&8)"
-  reverse: "&fReverse &8» &#42f598{word} &8(&#42f598{time}&8)"
-  who-am-i: "&fWho am I &8» &#42f598{word} &8(&#42f598{time}&8)"
-  word-guess: "&fWord Guess &8» &#42f598{word} &8(&#42f598{time}&8)"
-  word-stop: "&fWord Guess &8» &#42f598{word} &8(&#42f598{time}&8)"
-  hangman: "&fHangman &8» &#42f598{word} &8(&#42f598{time}&8)"
-  crafting: "&fCrafting &8» &#42f598{word} &8(&#42f598{time}&8)"
-  range: "&fRange &8» &#42f5980 ↔ 20 &8(&#42f598{time}&8)"
+# ------------------------------------------------------------------
+#  Storage and network (changes need a server restart)
+# ------------------------------------------------------------------
+database:
+  # h2 = local file (plugins/ChatGame/chatgame.mv.db), mysql = shared database
+  type: "h2"
+  mysql:
+    host: "localhost"
+    port: 3306
+    database: "chatgame"
+    username: "root"
+    password: "change-me"
+    pool-size: 10
+
+# Run one chat game across several servers behind a proxy.
+# Enable it on every server; exactly one of them must be the master.
+redis:
+  enabled: false
+  host: "localhost"
+  port: 6379
+  # Leave empty if your Redis server has no password.
+  password: ""
+  database: 0
+  ssl: false
+  # Connection timeout in milliseconds.
+  timeout: 2000
+  # master = starts rounds and decides who wins; slave = shows the master's rounds.
+  server-role: master
+  # Unique name of this server. Leave empty to generate one on every start.
+  # Never give two servers the same id, they would ignore each other.
+  server-id: ""
+  # Must be the same on every server of the network.
+  channel-prefix: "chatgame"
+
+# Do not change this; it is used to add new options to your file automatically.
+version: "1"

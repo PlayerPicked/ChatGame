@@ -1,7 +1,19 @@
-name: mc-ChatGame
-version: '1.1.1'
-main: com.mongenscave.mcchatgame.McChatGame
-api-version: '1.18'
+name: ChatGame
+version: '${version}'
+main: com.playerpicked.chatgame.ChatGame
+api-version: '1.21.8'
 authors: [ coma112 ]
+description: Automatic chat games with rewards, streaks and cross-server support.
 folia-supported: true
 softdepend: [ PlaceholderAPI ]
+
+permissions:
+  chatgame.reload:
+    description: Reload config.yml and messages.yml.
+    default: op
+  chatgame.start:
+    description: Start a chat game round with /chatgame start <game>.
+    default: op
+  chatgame.update:
+    description: Get notified on join when a new plugin version is available.
+    default: op

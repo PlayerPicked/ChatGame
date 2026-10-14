@@ -1,148 +1,234 @@
-# Docs: https://docs.mongenscave.com/free-products/mc-chatgame
+# ------------------------------------------------------------------
+#  ChatGame messages
+#  Format: MiniMessage - https://docs.advntr.dev/minimessage/format.html
+#  Every entry can be a single line or a list of lines.
+#  <prefix> works everywhere; other placeholders are listed per section.
+# ------------------------------------------------------------------
 
-prefix: "&#42f598[ChatGame]"
+prefix: "<#42f598>[ChatGame]</#42f598>"
 
-messages:
-  reload: "%prefix% &aYou have successfully reloaded the files!"
-  no-permission: "%prefix% &cYou don't have permission for this!"
+general:
+  reloaded: "<prefix> <green>You have successfully reloaded the files!"
+  no-permission: "<prefix> <red>You don't have permission for this!"
+  action-failed: "<prefix> <red>Something went wrong. Please try again later."
+  # <current> = running version, <latest> = newest version
+  update-available: "<prefix> <green>A new update for the plugin is now available! <dark_gray>(<red><current></red> <white>→</white> <yellow><latest></yellow>)"
 
+# <game> = the game's name from config.yml (e.g. math)
+commands:
+  round-started: "<prefix> <green>A <white><game></white> round has started."
+  game-not-configured: "<prefix> <red>The <white><game></white> game has no valid entries in config.yml."
+  not-master-server: "<prefix> <red>Rounds can only be started on the master server."
+  no-crafting-round: "<prefix> <red>No crafting game is active!"
+
+# Every game has three messages:
+#   announce = when the round starts (and for hangman after every guess)
+#   won      = <player> = winner, <time> = seconds it took
+#   expired  = nobody won in time
+# <puzzle> = what players see (equation, clue, scrambled word, ...)
+# <answer> = the correct answer
+games:
   who-am-i:
-    - ""
-    - "&8&l&m--------------------------"
-    - ""
-    - " &8&l| &#42f598&lWHO AM I?"
-    - ""
-    - " &8&l| &f{question}"
-    - ""
-    - "&8&l&m--------------------------"
-    - ""
+    announce:
+      - ""
+      - "<dark_gray><bold><strikethrough>--------------------------"
+      - ""
+      - " <dark_gray><bold>|</bold></dark_gray> <#42f598><bold>WHO AM I?"
+      - ""
+      - " <dark_gray><bold>|</bold></dark_gray> <white><puzzle>"
+      - ""
+      - "<dark_gray><bold><strikethrough>--------------------------"
+      - ""
+    won: "<prefix> <#42f598><player></#42f598> <white>won the chat game! <dark_gray>(<gray><time>s</gray>)"
+    expired: "<prefix> <red>No one guessed the correct answer! <dark_gray>(<yellow><answer></yellow>)"
 
   word-stop:
-    - ""
-    - "&8&l&m--------------------------"
-    - ""
-    - " &8&l| &#42f598&lGUESS THE MOB"
-    - ""
-    - " &8&l| &f{character}"
-    - ""
-    - "&8&l&m--------------------------"
-    - ""
+    announce:
+      - ""
+      - "<dark_gray><bold><strikethrough>--------------------------"
+      - ""
+      - " <dark_gray><bold>|</bold></dark_gray> <#42f598><bold>GUESS THE MOB"
+      - ""
+      - " <dark_gray><bold>|</bold></dark_gray> <white><puzzle>"
+      - ""
+      - "<dark_gray><bold><strikethrough>--------------------------"
+      - ""
+    won: "<prefix> <#42f598><player></#42f598> <white>won the chat game! <dark_gray>(<gray><time>s</gray>)"
+    expired: "<prefix> <red>No one guessed the correct answer! <dark_gray>(<yellow><answer></yellow>)"
 
   word-guesser:
-    - ""
-    - "&8&l&m--------------------------"
-    - ""
-    - " &8&l| &#42f598&lGUESS THE WORD"
-    - ""
-    - " &8&l| &f{word}"
-    - ""
-    - "&8&l&m--------------------------"
-    - ""
+    announce:
+      - ""
+      - "<dark_gray><bold><strikethrough>--------------------------"
+      - ""
+      - " <dark_gray><bold>|</bold></dark_gray> <#42f598><bold>GUESS THE WORD"
+      - ""
+      - " <dark_gray><bold>|</bold></dark_gray> <white><puzzle>"
+      - ""
+      - "<dark_gray><bold><strikethrough>--------------------------"
+      - ""
+    won: "<prefix> <#42f598><player></#42f598> <white>won the chat game! <dark_gray>(<gray><time>s</gray>)"
+    expired: "<prefix> <red>No one guessed the correct answer! <dark_gray>(<yellow><answer></yellow>)"
 
-  math-game:
-    - ""
-    - "&8&l&m--------------------------"
-    - ""
-    - " &8&l| &#42f598&lSOLVE IT"
-    - ""
-    - " &8&l| &f{equation}"
-    - ""
-    - "&8&l&m--------------------------"
-    - ""
+  math:
+    announce:
+      - ""
+      - "<dark_gray><bold><strikethrough>--------------------------"
+      - ""
+      - " <dark_gray><bold>|</bold></dark_gray> <#42f598><bold>SOLVE IT"
+      - ""
+      - " <dark_gray><bold>|</bold></dark_gray> <white><puzzle>"
+      - ""
+      - "<dark_gray><bold><strikethrough>--------------------------"
+      - ""
+    won: "<prefix> <#42f598><player></#42f598> <white>won the chat game! <dark_gray>(<gray><time>s</gray>)"
+    expired: "<prefix> <red>No one guessed the correct answer! <dark_gray>(<yellow><answer></yellow>)"
 
   reverse:
-    - ""
-    - "&8&l&m--------------------------"
-    - ""
-    - " &8&l| &#42f598&lREVERSE IT"
-    - ""
-    - " &8&l| &f{word}"
-    - ""
-    - "&8&l&m--------------------------"
-    - ""
-
-  crafting:
-    - ""
-    - "&8&l&m--------------------------"
-    - ""
-    - " &8&l| &#42f598&lCRAFT IT"
-    - ""
-    - " &8&l| &f{item} &8| <interactive:&8[&#42f598&lJOIN&8]|command=/chatgame crafting|hover=&7Click here to craft!>"
-    - ""
-    - "&8&l&m--------------------------"
-    - ""
+    announce:
+      - ""
+      - "<dark_gray><bold><strikethrough>--------------------------"
+      - ""
+      - " <dark_gray><bold>|</bold></dark_gray> <#42f598><bold>REVERSE IT"
+      - ""
+      - " <dark_gray><bold>|</bold></dark_gray> <white><puzzle>"
+      - ""
+      - "<dark_gray><bold><strikethrough>--------------------------"
+      - ""
+    won: "<prefix> <#42f598><player></#42f598> <white>won the chat game! <dark_gray>(<gray><time>s</gray>)"
+    expired: "<prefix> <red>No one guessed the correct answer! <dark_gray>(<yellow><answer></yellow>)"
 
   fill-out:
-    - ""
-    - "&8&l&m--------------------------"
-    - ""
-    - " &8&l| &#42f598&lFILL IN"
-    - ""
-    - " &8&l| &f{word}"
-    - ""
-    - "&8&l&m--------------------------"
-    - ""
+    announce:
+      - ""
+      - "<dark_gray><bold><strikethrough>--------------------------"
+      - ""
+      - " <dark_gray><bold>|</bold></dark_gray> <#42f598><bold>FILL IN"
+      - ""
+      - " <dark_gray><bold>|</bold></dark_gray> <white><puzzle>"
+      - ""
+      - "<dark_gray><bold><strikethrough>--------------------------"
+      - ""
+    won: "<prefix> <#42f598><player></#42f598> <white>won the chat game! <dark_gray>(<gray><time>s</gray>)"
+    expired: "<prefix> <red>No one guessed the correct answer! <dark_gray>(<yellow><answer></yellow>)"
 
   random-characters:
-    - ""
-    - "&8&l&m--------------------------"
-    - ""
-    - " &8&l| &#42f598&lCOPY IT"
-    - ""
-    - " &8&l| &f{word}"
-    - ""
-    - "&8&l&m--------------------------"
-    - ""
+    announce:
+      - ""
+      - "<dark_gray><bold><strikethrough>--------------------------"
+      - ""
+      - " <dark_gray><bold>|</bold></dark_gray> <#42f598><bold>COPY IT"
+      - ""
+      - " <dark_gray><bold>|</bold></dark_gray> <white><puzzle>"
+      - ""
+      - "<dark_gray><bold><strikethrough>--------------------------"
+      - ""
+    won: "<prefix> <#42f598><player></#42f598> <white>won the chat game! <dark_gray>(<gray><time>s</gray>)"
+    expired: "<prefix> <red>No one copied the characters in time!"
 
+  # <min>, <max> = the bounds from config.yml
   range:
-    - ""
-    - "&8&l&m--------------------------"
-    - ""
-    - " &8&l| &#42f598&lRANGE"
-    - ""
-    - " &8&l| &f0 ↔ 20"
-    - ""
-    - "&8&l&m--------------------------"
-    - ""
+    announce:
+      - ""
+      - "<dark_gray><bold><strikethrough>--------------------------"
+      - ""
+      - " <dark_gray><bold>|</bold></dark_gray> <#42f598><bold>GUESS THE NUMBER"
+      - ""
+      - " <dark_gray><bold>|</bold></dark_gray> <white><min> ↔ <max>"
+      - ""
+      - "<dark_gray><bold><strikethrough>--------------------------"
+      - ""
+    won: "<prefix> <#42f598><player></#42f598> <white>guessed <#42f598><answer></#42f598>! <dark_gray>(<gray><time>s</gray>)"
+    expired: "<prefix> <red>No one guessed the correct answer! <dark_gray>(<yellow><answer></yellow>) <gray>Range: <yellow><min> ↔ <max>"
 
+  # <puzzle> = the item in the client's own language
+  crafting:
+    announce:
+      - ""
+      - "<dark_gray><bold><strikethrough>--------------------------"
+      - ""
+      - " <dark_gray><bold>|</bold></dark_gray> <#42f598><bold>CRAFT IT"
+      - ""
+      - " <dark_gray><bold>|</bold></dark_gray> <white><puzzle></white> <dark_gray>|</dark_gray> <click:run_command:'/chatgame crafting'><hover:show_text:'<gray>Click here to craft!'><dark_gray>[<#42f598><bold>JOIN</bold></#42f598>]</dark_gray></hover></click>"
+      - ""
+      - "<dark_gray><bold><strikethrough>--------------------------"
+      - ""
+    won: "<prefix> <#42f598><player></#42f598> <white>won the crafting game! <dark_gray>(<gray><time>s</gray>)"
+    expired: "<prefix> <red>No one crafted the correct item!"
+    # <item> = the item to craft
+    menu-title: "<white>Crafting <dark_gray>»</dark_gray> <#42f598><bold><item>"
+
+  # <puzzle> = the word with hidden letters, <stages> = the gallows drawing
   hangman:
+    announce:
+      - ""
+      - "<dark_gray><bold><strikethrough>--------------------------"
+      - ""
+      - " <dark_gray><bold>|</bold></dark_gray> <#42f598><bold>HANGMAN"
+      - ""
+      - "<stages>"
+      - ""
+      - " <dark_gray><bold>|</bold></dark_gray> <puzzle>"
+      - ""
+      - "<dark_gray><bold><strikethrough>--------------------------"
+      - ""
+    won: "<prefix> <#42f598><player></#42f598> <white>won the chat game! <dark_gray>(<gray><time>s</gray>)"
+    expired: "<prefix> <red>No one guessed the correct answer! <dark_gray>(<yellow><answer></yellow>)"
+    hidden-letter: "<gray><bold>_ "
+    # <letter> = the guessed letter
+    found-letter: "<green><bold><letter> "
+    # One line per wrong guess. <line> = the line below
+    stages:
+      - "╔══╗"
+      - "║     ║"
+      - "║     O"
+      - "║    /|\\"
+      - "║    / \\"
+      - "╚════"
+    stage-reached: "<red><line>"
+    stage-pending: "<gray><line>"
+
+# <player> = the player, <streak> = the streak length
+streaks:
+  reached:
     - ""
-    - "&8&l&m--------------------------"
+    - "<dark_gray><bold><strikethrough>--------------------------"
     - ""
-    - " &8&l| &#42f598&lHANGMAN"
+    - " <dark_gray><bold>|</bold></dark_gray> <#42f598><bold><streak></bold></#42f598> <green><bold>NEW STREAK"
     - ""
-    - "{stage}"
+    - " <dark_gray><bold>|</bold></dark_gray> <white><player> reached a streak of <streak>!"
     - ""
-    - " &8&l| &f{word}"
+    - "<dark_gray><bold><strikethrough>--------------------------"
     - ""
-    - "&8&l&m--------------------------"
+  lost:
+    - ""
+    - "<dark_gray><bold><strikethrough>--------------------------"
+    - ""
+    - " <dark_gray><bold>|</bold></dark_gray> <#42f598><bold><streak></bold></#42f598> <red><bold>STREAK LOST"
+    - ""
+    - " <dark_gray><bold>|</bold></dark_gray> <white><player> lost a streak of <streak>!"
+    - ""
+    - "<dark_gray><bold><strikethrough>--------------------------"
     - ""
 
-  math-game-win: "%prefix% &#42f598{player} &fwon the chat game! &8(&7{time}&8)"
-  range-win: "%prefix% &#42f598{player} &fwon the chat game! &8(&7{time}&8)"
-  crafting-win: "%prefix% &#42f598{player} &fwon the crafting game! &8(&7{time}&8)"
-  who-am-i-win: "%prefix% &#42f598{player} &fwon the chat game! &8(&7{time}&8)"
-  word-stop-win: "%prefix% &#42f598{player} &fwon the chat game! &8(&7{time}&8)"
-  word-guesser-win: "%prefix% &#42f598{player} &fwon the chat game! &8(&7{time}&8)"
-  copy-win: "%prefix% &#42f598{player} &fwon the chat game! &8(&7{time}&8)"
-  reverse-win: "%prefix% &#42f598{player} &fwon the chat game! &8(&7{time}&8)"
-  fill-out-win: "%prefix% &#42f598{player} &fwon the chat game! &8(&7{time}&8)"
-  random-characters-win: "%prefix% &#42f598{player} &fwon the chat game! &8(&7{time}&8)"
-  hangman-win: "%prefix% &#42f598{player} &fwon the chat game! &8(&7{time}&8)"
+# Shown to the winner as an advancement toast.
+toast:
+  title: "<green><bold>SUCCESS GUESS!"
 
-  math-game-no-win: "%prefix% &cNo one guessed the correct answer! &8(&e{answer}&8)"
-  who-am-i-no-win: "%prefix% &cNo one guessed the correct answer! &8(&e{answer}&8)"
-  word-stop-no-win: "%prefix% &cNo one guessed the correct answer! &8(&e{answer}&8)"
-  word-guesser-no-win: "%prefix% &cNo one guessed the correct answer! &8(&e{answer}&8)"
-  copy-no-win: "%prefix% &cNo one guessed the correct answer! &8(&e{answer}&8)"
-  reverse-no-win: "%prefix% &cNo one guessed the correct answer! &8(&e{answer}&8)"
-  fill-out-no-win: "%prefix% &cNo one guessed the correct answer! &8(&e{answer}&8)"
-  hangman-no-win: "%prefix% &cNo one guessed the correct answer! &8(&e{answer}&8)"
+# PlaceholderAPI: %chatgame_current_game%
+# <puzzle> = what players see, <time> = seconds left
+placeholders:
+  no-game: "<red><bold>NO GAME"
+  fill-out: "<white>Fill out <dark_gray>»</dark_gray> <#42f598><puzzle></#42f598> <dark_gray>(<#42f598><time></#42f598>)"
+  math: "<white>Math <dark_gray>»</dark_gray> <#42f598><puzzle></#42f598> <dark_gray>(<#42f598><time></#42f598>)"
+  random-characters: "<white>Random Characters <dark_gray>»</dark_gray> <#42f598><puzzle></#42f598> <dark_gray>(<#42f598><time></#42f598>)"
+  reverse: "<white>Reverse <dark_gray>»</dark_gray> <#42f598><puzzle></#42f598> <dark_gray>(<#42f598><time></#42f598>)"
+  who-am-i: "<white>Who am I <dark_gray>»</dark_gray> <#42f598><puzzle></#42f598> <dark_gray>(<#42f598><time></#42f598>)"
+  word-guesser: "<white>Word Guess <dark_gray>»</dark_gray> <#42f598><puzzle></#42f598> <dark_gray>(<#42f598><time></#42f598>)"
+  word-stop: "<white>Guess the Mob <dark_gray>»</dark_gray> <#42f598><puzzle></#42f598> <dark_gray>(<#42f598><time></#42f598>)"
+  hangman: "<white>Hangman <dark_gray>»</dark_gray> <#42f598><puzzle></#42f598> <dark_gray>(<#42f598><time></#42f598>)"
+  crafting: "<white>Crafting <dark_gray>»</dark_gray> <#42f598><puzzle></#42f598> <dark_gray>(<#42f598><time></#42f598>)"
+  range: "<white>Range <dark_gray>»</dark_gray> <#42f598><puzzle></#42f598> <dark_gray>(<#42f598><time></#42f598>)"
 
-  random-characters-no-win: "%prefix% &cNo one guessed the correct answer!"
-  crafting-no-win: "%prefix% &cNo one crafted the correct item!"
-
-  range-no-win: "%prefix% &cNo one guessed the correct answer! &8(&e{answer}&8) &7Range: &e{min} ↔ {max}"
-
-  no-crafting-game: "%prefix% &cNo crafting game is active!"
-  update-notify: "%prefix% &aA new update for the plugin is now available! &8(&c{your} &f→ &e{latest}&8)"
+# Do not change this; it is used to add new texts to your file automatically.
+version: "1"

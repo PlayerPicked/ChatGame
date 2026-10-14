@@ -1,1 +1,1 @@
-rootProject.name = "mc-ChatGame"
+rootProject.name = "ChatGame"
