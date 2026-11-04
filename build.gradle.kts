@@ -5,7 +5,7 @@ plugins {
 }
 
 group = "com.playerpicked"
-version = "2.0.0"
+version = "2.1.0"
 
 repositories {
     mavenCentral()
@@ -31,13 +31,6 @@ dependencies {
     zap("com.h2database:h2:2.5.252")
     zap("com.zaxxer:HikariCP:7.1.0")
     zap("redis.clients:jedis:7.5.3")
-
-    testImplementation("io.papermc.paper:paper-api:1.21.8-R0.1-SNAPSHOT")
-    testImplementation("com.h2database:h2:2.5.252")
-    testImplementation("com.zaxxer:HikariCP:7.1.0")
-    testImplementation(platform("org.junit:junit-bom:5.13.4"))
-    testImplementation("org.junit.jupiter:junit-jupiter")
-    testRuntimeOnly("org.junit.platform:junit-platform-launcher")
 }
 
 java {
@@ -48,10 +41,6 @@ tasks.withType<JavaCompile>().configureEach {
     options.encoding = "UTF-8"
     options.release = 21
     options.compilerArgs.addAll(listOf("-parameters", "-Xlint:deprecation,removal,unchecked"))
-}
-
-tasks.test {
-    useJUnitPlatform()
 }
 
 tasks.processResources {

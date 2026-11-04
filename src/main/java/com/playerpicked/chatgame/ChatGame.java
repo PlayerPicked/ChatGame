@@ -12,6 +12,7 @@ import com.playerpicked.chatgame.game.RoundAnnouncer;
 import com.playerpicked.chatgame.game.RoundFollower;
 import com.playerpicked.chatgame.game.RoundOutcomes;
 import com.playerpicked.chatgame.game.RoundTracker;
+import com.playerpicked.chatgame.game.action.ActionListener;
 import com.playerpicked.chatgame.game.crafting.CraftingTables;
 import com.playerpicked.chatgame.game.puzzle.PuzzleFactory;
 import com.playerpicked.chatgame.network.NetworkBus;
@@ -112,7 +113,7 @@ public final class ChatGame extends ZapperJavaPlugin {
         runOnShutdown(craftingTables::closeAllNow);
         runOnShutdown(games::cancelCurrentRound);
 
-        registerListeners(new ChatAnswerListener(games), craftingTables, statsCache);
+        registerListeners(new ChatAnswerListener(games), new ActionListener(games, messages), craftingTables, statsCache);
         CommandRegistrar.register(this, config.commandAliases(), messages, new MainCommand(games, craftingTables, messages, this::reloadFiles));
 
         scheduler.runGlobalTimer(AutoRoundStarter.CHECK_INTERVAL_TICKS, AutoRoundStarter.CHECK_INTERVAL_TICKS,

@@ -172,7 +172,7 @@ crafting:
 
 # Guess the number between the two bounds. Format: "<min>-<max>"
 range:
-  enabled: true
+  enabled: false
   time: 10
   range: "0-20"
 
@@ -187,6 +187,84 @@ hangman:
   # Long words may not fit into the vanilla chat width.
   words:
     - "alma"
+
+# ------------------------------------------------------------------
+#  Action games: the first player who does something wins.
+#  goals = "<target> = <amount>", one is picked randomly per round.
+#  Target ANY matches everything (e.g. "ANY = 10" in kill-mob = any 10 mobs).
+#  Every server counts its own players, progress is shown in the action bar.
+# ------------------------------------------------------------------
+
+# Break blocks. Targets are vanilla block names, e.g. DIAMOND_ORE.
+# Blocks placed during the round don't count.
+break-block:
+  enabled: true
+  time: 120
+  goals:
+    - "DIAMOND_ORE = 1"
+    - "IRON_ORE = 5"
+    - "COAL_ORE = 10"
+    - "OAK_LOG = 16"
+    - "STONE = 64"
+
+# Place blocks. Targets are vanilla block names.
+# Placing on the same spot again during the round doesn't count.
+place-block:
+  enabled: true
+  time: 60
+  goals:
+    - "COBBLESTONE = 32"
+    - "TORCH = 10"
+    - "OAK_PLANKS = 20"
+
+# Kill mobs. Targets are vanilla entity names, e.g. ZOMBIE.
+kill-mob:
+  enabled: true
+  time: 180
+  goals:
+    - "ZOMBIE = 3"
+    - "SKELETON = 3"
+    - "CREEPER = 1"
+    - "SPIDER = 2"
+    - "ANY = 10"
+
+# Kill other players. The only target is PLAYER.
+kill-player:
+  enabled: false
+  time: 300
+  goals:
+    - "PLAYER = 1"
+    - "PLAYER = 3"
+
+# Catch something with a fishing rod. Targets are vanilla item names, e.g. COD.
+catch-fish:
+  enabled: true
+  time: 180
+  goals:
+    - "COD = 1"
+    - "SALMON = 1"
+    - "PUFFERFISH = 1"
+    - "ANY = 3"
+
+# Eat or drink something. Targets are vanilla item names.
+consume-item:
+  enabled: true
+  time: 60
+  goals:
+    - "BREAD = 1"
+    - "COOKED_BEEF = 2"
+    - "APPLE = 1"
+    - "ANY = 5"
+
+# Breed animals. Targets are vanilla entity names, e.g. COW.
+breed-animal:
+  enabled: true
+  time: 180
+  goals:
+    - "COW = 1"
+    - "SHEEP = 2"
+    - "PIG = 1"
+    - "ANY = 3"
 
 # ------------------------------------------------------------------
 #  Win streaks
@@ -256,4 +334,4 @@ redis:
   channel-prefix: "chatgame"
 
 # Do not change this; it is used to add new options to your file automatically.
-version: "1"
+version: "2"

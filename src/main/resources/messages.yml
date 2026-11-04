@@ -188,6 +188,112 @@ games:
     stage-reached: "<red><line>"
     stage-pending: "<gray><line>"
 
+  # Action games. <puzzle> = the target in the client's own language, <amount> = how many are needed
+  break-block:
+    announce:
+      - ""
+      - "<dark_gray><bold><strikethrough>--------------------------"
+      - ""
+      - " <dark_gray><bold>|</bold></dark_gray> <#42f598><bold>BREAK IT"
+      - ""
+      - " <dark_gray><bold>|</bold></dark_gray> <white>Break <#42f598><amount>x</#42f598> <white><puzzle></white> <white>first to win!"
+      - ""
+      - "<dark_gray><bold><strikethrough>--------------------------"
+      - ""
+    won: "<prefix> <#42f598><player></#42f598> <white>won the chat game! <dark_gray>(<gray><time>s</gray>)"
+    expired: "<prefix> <red>No one finished the challenge in time!"
+
+  place-block:
+    announce:
+      - ""
+      - "<dark_gray><bold><strikethrough>--------------------------"
+      - ""
+      - " <dark_gray><bold>|</bold></dark_gray> <#42f598><bold>PLACE IT"
+      - ""
+      - " <dark_gray><bold>|</bold></dark_gray> <white>Place <#42f598><amount>x</#42f598> <white><puzzle></white> <white>first to win!"
+      - ""
+      - "<dark_gray><bold><strikethrough>--------------------------"
+      - ""
+    won: "<prefix> <#42f598><player></#42f598> <white>won the chat game! <dark_gray>(<gray><time>s</gray>)"
+    expired: "<prefix> <red>No one finished the challenge in time!"
+
+  kill-mob:
+    announce:
+      - ""
+      - "<dark_gray><bold><strikethrough>--------------------------"
+      - ""
+      - " <dark_gray><bold>|</bold></dark_gray> <#42f598><bold>HUNT"
+      - ""
+      - " <dark_gray><bold>|</bold></dark_gray> <white>Kill <#42f598><amount>x</#42f598> <white><puzzle></white> <white>first to win!"
+      - ""
+      - "<dark_gray><bold><strikethrough>--------------------------"
+      - ""
+    won: "<prefix> <#42f598><player></#42f598> <white>won the chat game! <dark_gray>(<gray><time>s</gray>)"
+    expired: "<prefix> <red>No one finished the challenge in time!"
+
+  kill-player:
+    announce:
+      - ""
+      - "<dark_gray><bold><strikethrough>--------------------------"
+      - ""
+      - " <dark_gray><bold>|</bold></dark_gray> <#42f598><bold>PVP"
+      - ""
+      - " <dark_gray><bold>|</bold></dark_gray> <white>Kill <#42f598><amount></#42f598> players <white>first to win!"
+      - ""
+      - "<dark_gray><bold><strikethrough>--------------------------"
+      - ""
+    won: "<prefix> <#42f598><player></#42f598> <white>won the chat game! <dark_gray>(<gray><time>s</gray>)"
+    expired: "<prefix> <red>No one finished the challenge in time!"
+
+  catch-fish:
+    announce:
+      - ""
+      - "<dark_gray><bold><strikethrough>--------------------------"
+      - ""
+      - " <dark_gray><bold>|</bold></dark_gray> <#42f598><bold>GO FISHING"
+      - ""
+      - " <dark_gray><bold>|</bold></dark_gray> <white>Catch <#42f598><amount>x</#42f598> <white><puzzle></white> <white>first to win!"
+      - ""
+      - "<dark_gray><bold><strikethrough>--------------------------"
+      - ""
+    won: "<prefix> <#42f598><player></#42f598> <white>won the chat game! <dark_gray>(<gray><time>s</gray>)"
+    expired: "<prefix> <red>No one finished the challenge in time!"
+
+  consume-item:
+    announce:
+      - ""
+      - "<dark_gray><bold><strikethrough>--------------------------"
+      - ""
+      - " <dark_gray><bold>|</bold></dark_gray> <#42f598><bold>EAT IT"
+      - ""
+      - " <dark_gray><bold>|</bold></dark_gray> <white>Eat <#42f598><amount>x</#42f598> <white><puzzle></white> <white>first to win!"
+      - ""
+      - "<dark_gray><bold><strikethrough>--------------------------"
+      - ""
+    won: "<prefix> <#42f598><player></#42f598> <white>won the chat game! <dark_gray>(<gray><time>s</gray>)"
+    expired: "<prefix> <red>No one finished the challenge in time!"
+
+  breed-animal:
+    announce:
+      - ""
+      - "<dark_gray><bold><strikethrough>--------------------------"
+      - ""
+      - " <dark_gray><bold>|</bold></dark_gray> <#42f598><bold>BREED IT"
+      - ""
+      - " <dark_gray><bold>|</bold></dark_gray> <white>Breed <#42f598><amount>x</#42f598> <white><puzzle></white> <white>first to win!"
+      - ""
+      - "<dark_gray><bold><strikethrough>--------------------------"
+      - ""
+    won: "<prefix> <#42f598><player></#42f598> <white>won the chat game! <dark_gray>(<gray><time>s</gray>)"
+    expired: "<prefix> <red>No one finished the challenge in time!"
+
+# Shared texts of the action games.
+actions:
+  # Used as <puzzle> when the target is ANY.
+  any-target: "anything"
+  # Action bar while a player works on the goal. <count> = done so far, <amount> = needed
+  progress: "<white><puzzle> <dark_gray>»</dark_gray> <#42f598><count></#42f598><gray>/</gray><#42f598><amount>"
+
 # <player> = the player, <streak> = the streak length
 streaks:
   reached:
@@ -229,6 +335,13 @@ placeholders:
   hangman: "<white>Hangman <dark_gray>»</dark_gray> <#42f598><puzzle></#42f598> <dark_gray>(<#42f598><time></#42f598>)"
   crafting: "<white>Crafting <dark_gray>»</dark_gray> <#42f598><puzzle></#42f598> <dark_gray>(<#42f598><time></#42f598>)"
   range: "<white>Range <dark_gray>»</dark_gray> <#42f598><puzzle></#42f598> <dark_gray>(<#42f598><time></#42f598>)"
+  break-block: "<white>Break <dark_gray>»</dark_gray> <#42f598><puzzle></#42f598> <dark_gray>(<#42f598><time></#42f598>)"
+  place-block: "<white>Place <dark_gray>»</dark_gray> <#42f598><puzzle></#42f598> <dark_gray>(<#42f598><time></#42f598>)"
+  kill-mob: "<white>Kill <dark_gray>»</dark_gray> <#42f598><puzzle></#42f598> <dark_gray>(<#42f598><time></#42f598>)"
+  kill-player: "<white>Kill Players <dark_gray>»</dark_gray> <#42f598><puzzle></#42f598> <dark_gray>(<#42f598><time></#42f598>)"
+  catch-fish: "<white>Fishing <dark_gray>»</dark_gray> <#42f598><puzzle></#42f598> <dark_gray>(<#42f598><time></#42f598>)"
+  consume-item: "<white>Eat <dark_gray>»</dark_gray> <#42f598><puzzle></#42f598> <dark_gray>(<#42f598><time></#42f598>)"
+  breed-animal: "<white>Breed <dark_gray>»</dark_gray> <#42f598><puzzle></#42f598> <dark_gray>(<#42f598><time></#42f598>)"
 
 # Do not change this; it is used to add new texts to your file automatically.
-version: "1"
+version: "2"

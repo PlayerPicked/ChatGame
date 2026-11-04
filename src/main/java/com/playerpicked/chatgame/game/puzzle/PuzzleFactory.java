@@ -3,6 +3,8 @@ package com.playerpicked.chatgame.game.puzzle;
 import com.playerpicked.chatgame.config.GameSettings;
 import com.playerpicked.chatgame.config.PluginConfig;
 import com.playerpicked.chatgame.game.GameType;
+import com.playerpicked.chatgame.game.action.ActionKind;
+import com.playerpicked.chatgame.game.action.ActionPuzzle;
 import dev.dejvokep.boostedyaml.block.implementation.Section;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
@@ -47,6 +49,8 @@ public final class PuzzleFactory {
             case HANGMAN -> pick(settings.entries("words"), random).map(word -> new HangmanPuzzle(word,
                     settings.getInt("max-wrong-guesses", DEFAULT_HANGMAN_WRONG_GUESSES), settings.getBoolean("only-once", false)));
             case CRAFTING -> craftingPuzzle(settings, random);
+            case BREAK_BLOCK, PLACE_BLOCK, KILL_MOB, KILL_PLAYER, CATCH_FISH, CONSUME_ITEM, BREED_ANIMAL ->
+                    pick(settings.entries("goals"), random).flatMap(goal -> actionPuzzle(type, goal));
         };
     }
 
@@ -56,6 +60,8 @@ public final class PuzzleFactory {
             case RANGE -> RangePuzzle.fromSeed(seed);
             case HANGMAN -> HangmanPuzzle.fromSeed(seed);
             case CRAFTING -> CraftingPuzzle.fromSeed(seed);
+            case BREAK_BLOCK, PLACE_BLOCK, KILL_MOB, KILL_PLAYER, CATCH_FISH, CONSUME_ITEM, BREED_ANIMAL ->
+                    ActionPuzzle.fromSeed(type, seed);
         };
     }
 
@@ -90,6 +96,28 @@ public final class PuzzleFactory {
             if (puzzle.isEmpty()) logger.warn("Ignoring crafting entry {}: unknown item or ingredient", item);
             return puzzle.map(Puzzle.class::cast);
         });
+    }
+
+    private @NotNull Optional<Puzzle> actionPuzzle(@NotNull GameType type, @NotNull String goal) {
+        // "<target> = <amount>"; a bare "<target>" means once
+        Optional<WordTransforms.TextPair> pair = WordTransforms.splitPair(goal);
+        String targetName = pair.map(WordTransforms.TextPair::left).orElse(goal);
+        String amountText = pair.map(WordTransforms.TextPair::right).orElse("1");
+
+        ActionKind kind = ActionKind.of(type).orElseThrow();
+        Optional<ActionKind.Target> target = kind.resolveTarget(targetName);
+        if (target.isEmpty()) {
+            logger.warn("Ignoring {} goal with an unknown or unfitting target: {}", type.configSection(), goal);
+            return Optional.empty();
+        }
+        try {
+            int amount = Integer.parseInt(amountText.trim());
+            if (amount < 1) throw new NumberFormatException("must be at least 1");
+            return Optional.of(new ActionPuzzle(kind, target.get(), amount));
+        } catch (NumberFormatException exception) {
+            logger.warn("Ignoring {} goal with an invalid amount: {}", type.configSection(), goal);
+            return Optional.empty();
+        }
     }
 
     private static @NotNull Optional<String> pick(@NotNull List<String> entries, @NotNull RandomGenerator random) {

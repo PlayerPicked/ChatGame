@@ -13,7 +13,14 @@ public enum GameType {
     REVERSE,
     CRAFTING,
     HANGMAN,
-    RANGE;
+    RANGE,
+    BREAK_BLOCK,
+    PLACE_BLOCK,
+    KILL_MOB,
+    KILL_PLAYER,
+    CATCH_FISH,
+    CONSUME_ITEM,
+    BREED_ANIMAL;
 
     public @NotNull String configSection() {
         return ConfigNames.of(this);
