@@ -198,7 +198,7 @@ hangman:
 # Break blocks. Targets are vanilla block names, e.g. DIAMOND_ORE.
 # Blocks placed during the round don't count.
 break-block:
-  enabled: true
+  enabled: false
   time: 120
   goals:
     - "DIAMOND_ORE = 1"
@@ -210,7 +210,7 @@ break-block:
 # Place blocks. Targets are vanilla block names.
 # Placing on the same spot again during the round doesn't count.
 place-block:
-  enabled: true
+  enabled: false
   time: 60
   goals:
     - "COBBLESTONE = 32"
@@ -219,7 +219,7 @@ place-block:
 
 # Kill mobs. Targets are vanilla entity names, e.g. ZOMBIE.
 kill-mob:
-  enabled: true
+  enabled: false
   time: 180
   goals:
     - "ZOMBIE = 3"
@@ -238,7 +238,7 @@ kill-player:
 
 # Catch something with a fishing rod. Targets are vanilla item names, e.g. COD.
 catch-fish:
-  enabled: true
+  enabled: false
   time: 180
   goals:
     - "COD = 1"
@@ -248,7 +248,7 @@ catch-fish:
 
 # Eat or drink something. Targets are vanilla item names.
 consume-item:
-  enabled: true
+  enabled: false
   time: 60
   goals:
     - "BREAD = 1"

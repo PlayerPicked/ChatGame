@@ -43,13 +43,18 @@ public final class Messages {
     public @NotNull @Unmodifiable List<Component> lines(@NotNull String route, @NotNull TagResolver... placeholders) {
         TagResolver resolver = withPrefix(placeholders);
         return file.getLines(route).stream()
-                .map(line -> MINI_MESSAGE.deserialize(line, resolver))
+                .map(line -> deserialize(line, resolver))
                 .toList();
     }
 
     public @NotNull Component single(@NotNull String route, @NotNull TagResolver... placeholders) {
         String text = file.getString(route, "");
-        return text.isEmpty() ? Component.empty() : MINI_MESSAGE.deserialize(text, withPrefix(placeholders));
+        return text.isEmpty() ? Component.empty() : deserialize(text, withPrefix(placeholders));
+    }
+
+    private static @NotNull Component deserialize(@NotNull String line, @NotNull TagResolver resolver) {
+        if (!CenteredText.isCentered(line)) return MINI_MESSAGE.deserialize(line, resolver);
+        return CenteredText.center(MINI_MESSAGE.deserialize(CenteredText.strip(line), resolver));
     }
 
     public boolean has(@NotNull String route) {

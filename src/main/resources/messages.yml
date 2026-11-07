@@ -3,6 +3,7 @@
 #  Format: MiniMessage - https://docs.advntr.dev/minimessage/format.html
 #  Every entry can be a single line or a list of lines.
 #  <prefix> works everywhere; other placeholders are listed per section.
+#  Start a line with [center] to center it in chat, e.g. "[center]<white>Hello!"
 # ------------------------------------------------------------------
 
 prefix: "<#42f598>[ChatGame]</#42f598>"
@@ -275,15 +276,15 @@ games:
 
   breed-animal:
     announce:
-      - ""
-      - "<dark_gray><bold><strikethrough>--------------------------"
-      - ""
-      - " <dark_gray><bold>|</bold></dark_gray> <#42f598><bold>BREED IT"
-      - ""
-      - " <dark_gray><bold>|</bold></dark_gray> <white>Breed <#42f598><amount>x</#42f598> <white><puzzle></white> <white>first to win!"
-      - ""
-      - "<dark_gray><bold><strikethrough>--------------------------"
-      - ""
+      - "[center]"
+      - "[center]<dark_gray><bold><strikethrough>--------------------------"
+      - "[center]"
+      - "[center]<dark_gray><bold>|</bold></dark_gray> <#42f598><bold>BREED IT"
+      - "[center]"
+      - "[center]<dark_gray><bold>|</bold></dark_gray> <white>Breed <#42f598><amount>x</#42f598> <white><puzzle></white> <white>first to win!"
+      - "[center]"
+      - "[center]<dark_gray><bold><strikethrough>--------------------------"
+      - "[center]"
     won: "<prefix> <#42f598><player></#42f598> <white>won the chat game! <dark_gray>(<gray><time>s</gray>)"
     expired: "<prefix> <red>No one finished the challenge in time!"
 
